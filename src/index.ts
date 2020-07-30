@@ -1,30 +1,9 @@
-import core from "@actions/core";
-import glob from "@actions/glob";
-import github from "@actions/github/lib/github";
+import * as core from "@actions/core";
+import * as glob from "@actions/glob";
+import * as github from "@actions/github/lib/github";
+import { generateGlobber } from "./utils";
 import process from "process";
-import fs from "fs";
 import { OctokitResponse, PullsListFilesResponseData } from "@octokit/types";
-
-async function generateGlobber(
-  codeOwnerPath: string | undefined
-): Promise<glob.Globber> {
-  const rawCodeOwners = fs.readFileSync(codeOwnerPath || ".github/CODEOWNERS");
-
-  const globPatterns = rawCodeOwners
-    .toString()
-    .split(/\r?\n/)
-    .reduce((acc: string[], curr) => {
-      const trimmedLine = curr.trim();
-      if (trimmedLine === "" || trimmedLine.startsWith("#")) {
-        return acc;
-      }
-      const globPattern = trimmedLine.split(/\s+/)[0];
-      acc.push(globPattern);
-      return acc;
-    }, []);
-  const globber = await glob.create(globPatterns.join("\n"));
-  return globber;
-}
 
 function readRequiredContext(): [string, string] {
   const token = process.env.GITHUB_TOKEN;
