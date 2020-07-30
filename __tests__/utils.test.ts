@@ -1,9 +1,10 @@
 import fs from "fs";
 import { mocked } from "ts-jest/utils";
-import { generateGlobber } from "../src/utils";
+import { generateGlobber, checkFiles } from "../src/utils";
 import * as glob from "@actions/glob";
 
 jest.mock("fs");
+jest.mock("glob");
 describe("index", () => {
   describe("generateGlobber", () => {
     let mockedRead: jest.MockedFunction<typeof fs.readFileSync>;
@@ -60,6 +61,28 @@ describe("index", () => {
         expect(mockedRead.mock.calls[0][0]).toBe(".github/CODEOWNERS");
         expect(createSpy.mock.calls.length).toBe(1);
         expect(createSpy.mock.calls[0][0]).toBe(["*.js", "*.ts"].join("\n"));
+      });
+    });
+  });
+
+  describe("checkFiles", () => {
+    it("Should pass when all the files are covered", () => {
+      return glob.create("").then((globber) => {
+        const mockedGlob = jest.spyOn(globber, "glob");
+        mockedGlob.mockResolvedValue(["file1", "./file2"]);
+        return checkFiles(globber, ["file1", "./file2"]).then((result) => {
+          expect(result).toBe(true);
+        });
+      });
+    });
+
+    it("Should fail when not all the files are covered", () => {
+      return glob.create("").then((globber) => {
+        const mockedGlob = jest.spyOn(globber, "glob");
+        mockedGlob.mockResolvedValue(["file1", "file23"]);
+        return checkFiles(globber, ["file1", "file2"]).then((result) => {
+          expect(result).toBe(false);
+        });
       });
     });
   });

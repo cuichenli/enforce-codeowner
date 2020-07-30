@@ -1,5 +1,7 @@
 import fs from "fs";
 import * as glob from "@actions/glob";
+import * as core from "@actions/core";
+import path from "path";
 
 export async function generateGlobber(
   codeOwnerPath: string | undefined
@@ -19,4 +21,20 @@ export async function generateGlobber(
       return acc;
     }, []);
   return await glob.create(globPatterns.join("\n"));
+}
+
+export async function checkFiles(
+  globber: glob.Globber,
+  diffFiles: string[]
+): Promise<boolean> {
+  const files = await globber.glob();
+  const resolvedPaths = files.map((file) => path.resolve(file));
+  let passed = true;
+  diffFiles.map((file) => {
+    if (resolvedPaths.indexOf(path.resolve(file)) === -1) {
+      core.error(`${file} does not have a codeowner.`);
+      passed = false;
+    }
+  });
+  return passed;
 }

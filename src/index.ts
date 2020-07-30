@@ -1,7 +1,6 @@
 import * as core from "@actions/core";
-import * as glob from "@actions/glob";
 import * as github from "@actions/github/lib/github";
-import { generateGlobber } from "./utils";
+import { generateGlobber, checkFiles } from "./utils";
 import process from "process";
 import { OctokitResponse, PullsListFilesResponseData } from "@octokit/types";
 
@@ -35,25 +34,13 @@ async function main() {
     }
   );
   const glober = await generateGlobber(codeOwnerPath);
-  const result = await checkFiles(glober, response.data);
+  const result = await checkFiles(
+    glober,
+    response.data.map((data) => data.filename)
+  );
   if (!result) {
     throw "Test failed.";
   }
-}
-
-async function checkFiles(
-  globber: glob.Globber,
-  diffFiles: PullsListFilesResponseData
-): Promise<boolean> {
-  const files = await globber.glob();
-  let passed = true;
-  diffFiles.map((file) => {
-    if (!(file.filename in files)) {
-      core.error(`${file.filename} does not have a codeowner.`);
-      passed = false;
-    }
-  });
-  return passed;
 }
 
 main().catch((error: Error) => {
