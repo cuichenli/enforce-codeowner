@@ -1,49 +1,49 @@
-import * as core from "@actions/core";
-import * as github from "@actions/github/lib/github";
-import { generateGlobber, checkFiles } from "./utils";
-import process from "process";
-import { OctokitResponse, PullsListFilesResponseData } from "@octokit/types";
+import * as core from '@actions/core'
+import * as github from '@actions/github/lib/github'
+import { generateGlobber, checkFiles } from './utils'
+import process from 'process'
+import { OctokitResponse, PullsListFilesResponseData } from '@octokit/types'
 
 function readRequiredContext(): [string, string] {
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN
   if (token === undefined) {
-    throw "Failed to read GITHUB_TOKEN";
+    throw 'Failed to read GITHUB_TOKEN'
   }
 
-  const githubRef = process.env.GITHUB_REF; // refs/pull/:prNumber/merge
+  const githubRef = process.env.GITHUB_REF // refs/pull/:prNumber/merge
   if (githubRef === undefined) {
-    throw "Failed to read GITHUB_REF";
+    throw 'Failed to read GITHUB_REF'
   }
 
-  const prNumber = githubRef.split("/")[2];
-  return [token, prNumber];
+  const prNumber = githubRef.split('/')[2]
+  return [token, prNumber]
 }
 
 async function main() {
-  const [token, prNumber] = readRequiredContext();
-  const codeOwnerPath = core.getInput("CODEOWNERS_PATH", { required: false });
+  const [token, prNumber] = readRequiredContext()
+  const codeOwnerPath = core.getInput('CODEOWNERS_PATH', { required: false })
 
-  const { owner, repo } = github.context.repo;
-  const octokit = github.getOctokit(token);
+  const { owner, repo } = github.context.repo
+  const octokit = github.getOctokit(token)
   const response: OctokitResponse<PullsListFilesResponseData> = await octokit.request(
-    "GET /repos/{owner}/{repo}/pulls/{pull_number}/files",
+    'GET /repos/{owner}/{repo}/pulls/{pull_number}/files',
     {
       pull_number: Number(prNumber),
       owner,
       repo,
     }
-  );
-  const glober = await generateGlobber(codeOwnerPath);
+  )
+  const glober = await generateGlobber(codeOwnerPath)
   const result = await checkFiles(
     glober,
     response.data.map((data) => data.filename)
-  );
+  )
   if (!result) {
-    throw "Test failed.";
+    throw 'Test failed.'
   }
 }
 
 main().catch((error: Error) => {
-  core.error(error.message);
-  process.exit(1);
-});
+  core.error(error.message)
+  process.exit(1)
+})
