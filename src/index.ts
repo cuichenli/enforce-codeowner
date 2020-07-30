@@ -15,7 +15,7 @@ async function generateGlobber(
     .split(/\r?\n/)
     .reduce((acc: string[], curr) => {
       const trimmedLine = curr.trim();
-      if (trimmedLine === "") {
+      if (trimmedLine === "" || trimmedLine.startsWith("#")) {
         return acc;
       }
       const globPattern = trimmedLine.split(/\s+/)[0];
