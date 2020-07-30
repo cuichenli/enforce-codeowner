@@ -47,5 +47,20 @@ describe("index", () => {
         expect(createSpy.mock.calls[0][0]).toBe(["*.js", "*.ts"].join("\n"));
       });
     });
+
+    it("Should read the default codeowner file when no codeowner file is provided", () => {
+      const mockedRead = mocked(fs.readFileSync);
+      mockedRead.mockReturnValue(`
+        # This is a comment
+        *.js     @someone
+        *.ts     @someoneelse
+    `);
+      return generateGlobber(undefined).then(() => {
+        expect(mockedRead.mock.calls.length).toBe(1);
+        expect(mockedRead.mock.calls[0][0]).toBe(".github/CODEOWNERS");
+        expect(createSpy.mock.calls.length).toBe(1);
+        expect(createSpy.mock.calls[0][0]).toBe(["*.js", "*.ts"].join("\n"));
+      });
+    });
   });
 });
