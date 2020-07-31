@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { mocked } from 'ts-jest/utils'
-import { generateGlobber, checkFiles } from '../src/utils'
+import { generateGlobber, checkFiles, readRequiredContext } from '../src/utils'
 import * as glob from '@actions/glob'
 
 jest.mock('fs')
@@ -84,6 +84,43 @@ describe('index', () => {
           expect(result).toBe(false)
         })
       })
+    })
+  })
+
+  describe('readRequiredContext', () => {
+    const OLD_ENV = process.env
+    beforeEach(() => {
+      jest.resetModules()
+      process.env = {}
+    })
+
+    afterEach(() => {
+      process.env = OLD_ENV
+    })
+
+    it('Should not throw any error when the required environment variables are provided', () => {
+      process.env = {
+        GITHUB_TOKEN: 'token',
+        GITHUB_REF: 'refs/pull/23/merge',
+      }
+
+      const [token, prNumber] = readRequiredContext()
+      expect(token).toBe('token')
+      expect(prNumber).toBe('23')
+    })
+
+    it('Should throw error when GITHUB_TOKEN is not provided', () => {
+      process.env = {
+        GITHUB_REF: 'refs/pull/23/merge',
+      }
+      expect(readRequiredContext).toThrow('Failed to read GITHUB_TOKEN')
+    })
+
+    it('Should throw error when GITHUB_REF is not provided', () => {
+      process.env = {
+        GITHUB_TOKEN: 'refs/pull/23/merge',
+      }
+      expect(readRequiredContext).toThrow('Failed to read GITHUB_REF')
     })
   })
 })

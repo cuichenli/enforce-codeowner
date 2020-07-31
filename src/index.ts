@@ -1,23 +1,8 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github/lib/github'
-import { generateGlobber, checkFiles } from './utils'
+import { generateGlobber, checkFiles, readRequiredContext } from './utils'
 import process from 'process'
 import { OctokitResponse, PullsListFilesResponseData } from '@octokit/types'
-
-function readRequiredContext(): [string, string] {
-  const token = process.env.GITHUB_TOKEN
-  if (token === undefined) {
-    throw 'Failed to read GITHUB_TOKEN'
-  }
-
-  const githubRef = process.env.GITHUB_REF // refs/pull/:prNumber/merge
-  if (githubRef === undefined) {
-    throw 'Failed to read GITHUB_REF'
-  }
-
-  const prNumber = githubRef.split('/')[2]
-  return [token, prNumber]
-}
 
 async function main() {
   const [token, prNumber] = readRequiredContext()
