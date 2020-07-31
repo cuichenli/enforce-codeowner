@@ -4,7 +4,7 @@ import { generateGlobber, checkFiles, readRequiredContext } from './utils'
 import process from 'process'
 import { OctokitResponse, PullsListFilesResponseData } from '@octokit/types'
 
-async function main() {
+export async function main(): Promise<void> {
   const [token, prNumber] = readRequiredContext()
   const codeOwnerPath = core.getInput('CODEOWNERS_PATH', { required: false })
 
@@ -13,16 +13,14 @@ async function main() {
   const response: OctokitResponse<PullsListFilesResponseData> = await octokit.request(
     'GET /repos/{owner}/{repo}/pulls/{pull_number}/files',
     {
-      pull_number: Number(prNumber),
+      pull_number: prNumber,
       owner,
       repo,
     }
   )
   const glober = await generateGlobber(codeOwnerPath)
-  const result = await checkFiles(
-    glober,
-    response.data.map((data) => data.filename)
-  )
+  const diffFiles = response.data.map((data) => data.filename)
+  const result = await checkFiles(glober, diffFiles)
   if (!result) {
     throw 'Test failed.'
   }

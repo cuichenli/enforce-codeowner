@@ -31,7 +31,8 @@ export async function checkFiles(
   const resolvedPaths = files.map((file) => path.resolve(file))
   let passed = true
   diffFiles.map((file) => {
-    if (resolvedPaths.indexOf(path.resolve(file)) === -1) {
+    const resolvedDiffFile = path.resolve(file)
+    if (resolvedPaths.indexOf(resolvedDiffFile) === -1) {
       core.error(`${file} does not have a codeowner.`)
       passed = false
     }
@@ -39,7 +40,7 @@ export async function checkFiles(
   return passed
 }
 
-export function readRequiredContext(): [string, string] {
+export function readRequiredContext(): [string, number] {
   const token = process.env.GITHUB_TOKEN
   if (token === undefined) {
     throw 'Failed to read GITHUB_TOKEN'
@@ -51,5 +52,5 @@ export function readRequiredContext(): [string, string] {
   }
 
   const prNumber = githubRef.split('/')[2]
-  return [token, prNumber]
+  return [token, Number(prNumber)]
 }

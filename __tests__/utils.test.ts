@@ -96,6 +96,7 @@ describe('index', () => {
 
     afterEach(() => {
       process.env = OLD_ENV
+      jest.clearAllMocks()
     })
 
     it('Should not throw any error when the required environment variables are provided', () => {
@@ -106,7 +107,7 @@ describe('index', () => {
 
       const [token, prNumber] = readRequiredContext()
       expect(token).toBe('token')
-      expect(prNumber).toBe('23')
+      expect(prNumber).toBe(23)
     })
 
     it('Should throw error when GITHUB_TOKEN is not provided', () => {
