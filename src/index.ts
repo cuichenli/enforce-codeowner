@@ -28,7 +28,9 @@ async function main() {
   }
 }
 
-main().catch((error: Error) => {
-  core.error(error.message)
-  process.exit(1)
-})
+if (require.main === module) {
+  main().catch((error: Error) => {
+    core.error(error.message)
+    process.exit(1)
+  })
+}
