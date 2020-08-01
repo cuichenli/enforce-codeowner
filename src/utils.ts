@@ -6,7 +6,12 @@ import path from 'path'
 export async function generateGlobber(
   codeOwnerPath: string | undefined
 ): Promise<glob.Globber> {
-  const rawCodeOwners = fs.readFileSync(codeOwnerPath || '.github/CODEOWNERS')
+  const path = codeOwnerPath || '.github/CODEOWNERS'
+  if (!fs.existsSync(path)) {
+    throw new Error(`CODEOWNERS file ${path} not exist.`)
+  }
+
+  const rawCodeOwners = fs.readFileSync(path)
 
   const globPatterns = rawCodeOwners
     .toString()
