@@ -1,6 +1,7 @@
 import fs from 'fs'
 import * as glob from '@actions/glob'
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import path from 'path'
 
 export async function generateGlobber(
@@ -51,11 +52,6 @@ export function readRequiredContext(): [string, number] {
     throw 'Failed to read GITHUB_TOKEN'
   }
 
-  const githubRef = process.env.GITHUB_REF // refs/pull/:prNumber/merge
-  if (githubRef === undefined) {
-    throw 'Failed to read GITHUB_REF'
-  }
-
-  const prNumber = githubRef.split('/')[2]
+  const prNumber = github.context.payload.number
   return [token, Number(prNumber)]
 }

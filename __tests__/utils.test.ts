@@ -2,6 +2,7 @@ import fs from 'fs'
 import { mocked } from 'ts-jest/utils'
 import { generateGlobber, checkFiles, readRequiredContext } from '../src/utils'
 import * as glob from '@actions/glob'
+import * as github from '@actions/github'
 
 jest.mock('fs')
 jest.mock('glob')
@@ -110,6 +111,7 @@ describe('index', () => {
 
   describe('readRequiredContext', () => {
     const OLD_ENV = process.env
+    const originalContext = { ...github.context }
     beforeEach(() => {
       jest.resetModules()
       process.env = {}
@@ -117,32 +119,23 @@ describe('index', () => {
 
     afterEach(() => {
       process.env = OLD_ENV
+      github.context.payload.number = originalContext.payload.number
       jest.clearAllMocks()
     })
 
     it('Should not throw any error when the required environment variables are provided', () => {
       process.env = {
         GITHUB_TOKEN: 'token',
-        GITHUB_REF: 'refs/pull/23/merge',
       }
-
+      github.context.payload.number = 23
       const [token, prNumber] = readRequiredContext()
       expect(token).toBe('token')
       expect(prNumber).toBe(23)
     })
 
     it('Should throw error when GITHUB_TOKEN is not provided', () => {
-      process.env = {
-        GITHUB_REF: 'refs/pull/23/merge',
-      }
+      process.env = {}
       expect(readRequiredContext).toThrow('Failed to read GITHUB_TOKEN')
-    })
-
-    it('Should throw error when GITHUB_REF is not provided', () => {
-      process.env = {
-        GITHUB_TOKEN: 'refs/pull/23/merge',
-      }
-      expect(readRequiredContext).toThrow('Failed to read GITHUB_REF')
     })
   })
 })
