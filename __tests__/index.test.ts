@@ -114,7 +114,7 @@ describe('main', () => {
         'package.json',
         'src/not-exist.js',
       ])
-      expect(e).toBe('Test failed.')
+      expect(e.message).toBe('Test failed.')
     })
   })
 })

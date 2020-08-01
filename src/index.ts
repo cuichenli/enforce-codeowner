@@ -24,7 +24,7 @@ export async function main(): Promise<void> {
   const diffFiles = response.data.map((data) => data.filename)
   const result = await checkFiles(ig, diffFiles)
   if (!result) {
-    throw 'Test failed.'
+    throw new Error('Test failed.')
   }
 }
 
