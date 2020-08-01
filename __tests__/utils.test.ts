@@ -1,110 +1,108 @@
 import fs from 'fs'
 import { mocked } from 'ts-jest/utils'
-import { generateGlobber, checkFiles, readRequiredContext } from '../src/utils'
-import * as glob from '@actions/glob'
+import { checkFiles, readRequiredContext, generateIgnore } from '../src/utils'
 import * as github from '@actions/github'
+import ignore from 'ignore'
 
 jest.mock('fs')
-jest.mock('glob')
 describe('index', () => {
-  describe('generateGlobber', () => {
+  describe('generateIgnore', () => {
     let mockedRead: jest.MockedFunction<typeof fs.readFileSync>
-    let createSpy: jest.SpyInstance
     let mockedExist: jest.MockedFunction<typeof fs.existsSync>
     beforeEach(() => {
       mockedRead = mocked(fs.readFileSync) as jest.MockedFunction<
         typeof fs.readFileSync
       >
-      createSpy = jest.spyOn(glob, 'create')
       mockedExist = mocked(fs.existsSync)
     })
 
     afterEach(() => {
       mockedRead.mockClear()
-      createSpy.mockClear()
       mockedExist.mockClear()
     })
 
-    it('Should generate globber based on contents in CODEOWNER file with one codeonwer and comments', () => {
+    it('Should generate globber based on contents in CODEOWNER file with one codeonwer pattern and comments', () => {
       mockedRead.mockReturnValue(`
         # This is a comment
         *.js     @someone
     `)
       mockedExist.mockReturnValue(true)
-      return generateGlobber('CODEOWNER').then(() => {
-        expect(mockedRead.mock.calls.length).toBe(1)
-        expect(mockedRead.mock.calls[0][0]).toBe('CODEOWNER')
-        expect(createSpy.mock.calls.length).toBe(1)
-        expect(createSpy.mock.calls[0][0]).toBe('*.js')
-        expect(mockedExist).toHaveBeenCalledTimes(1)
-        expect(mockedExist).toHaveBeenCalledWith('CODEOWNER')
-      })
+      const ig = ignore()
+      const spyAdd = jest.spyOn(ig, 'add')
+      generateIgnore(ig, 'CODEOWNER')
+      expect(mockedRead.mock.calls.length).toBe(1)
+      expect(mockedRead.mock.calls[0][0]).toBe('CODEOWNER')
+      expect(spyAdd).toHaveBeenCalledTimes(1)
+      expect(spyAdd).toHaveBeenCalledWith('*.js')
+      expect(mockedExist).toHaveBeenCalledTimes(1)
+      expect(mockedExist).toHaveBeenCalledWith('CODEOWNER')
     })
 
-    it('Should generate globber based on contents in CODEOWNER file with multipe codeonwers and comments', async () => {
+    it('Should generate globber based on contents in default CODEOWNER file with one codeonwer pattern and comments', () => {
       mockedRead.mockReturnValue(`
         # This is a comment
         *.js     @someone
-        *.ts     @someoneelse
     `)
       mockedExist.mockReturnValue(true)
-
-      return generateGlobber('CODEOWNER').then(() => {
-        expect(mockedRead.mock.calls.length).toBe(1)
-        expect(mockedRead.mock.calls[0][0]).toBe('CODEOWNER')
-        expect(createSpy.mock.calls.length).toBe(1)
-        expect(createSpy.mock.calls[0][0]).toBe(['*.js', '*.ts'].join('\n'))
-        expect(mockedExist).toHaveBeenCalledTimes(1)
-        expect(mockedExist).toHaveBeenCalledWith('CODEOWNER')
-      })
+      const ig = ignore()
+      const spyAdd = jest.spyOn(ig, 'add')
+      generateIgnore(ig, undefined)
+      expect(mockedRead.mock.calls.length).toBe(1)
+      expect(mockedRead.mock.calls[0][0]).toBe('.github/CODEOWNERS')
+      expect(spyAdd).toHaveBeenCalledTimes(1)
+      expect(spyAdd).toHaveBeenCalledWith('*.js')
+      expect(mockedExist).toHaveBeenCalledTimes(1)
+      expect(mockedExist).toHaveBeenCalledWith('.github/CODEOWNERS')
     })
 
-    it('Should read the default codeowner file when no codeowner file is provided', () => {
+    it('Should generate globber based on contents in CODEOWNER file with two codeonwer patterns and comments', () => {
       mockedRead.mockReturnValue(`
         # This is a comment
         *.js     @someone
-        *.ts     @someoneelse
+        # another comment 
+        src/*.js
     `)
       mockedExist.mockReturnValue(true)
-      return generateGlobber(undefined).then(() => {
-        expect(mockedRead.mock.calls.length).toBe(1)
-        expect(mockedRead.mock.calls[0][0]).toBe('.github/CODEOWNERS')
-        expect(createSpy.mock.calls.length).toBe(1)
-        expect(createSpy.mock.calls[0][0]).toBe(['*.js', '*.ts'].join('\n'))
-        expect(mockedExist).toHaveBeenCalledTimes(1)
-        expect(mockedExist).toHaveBeenCalledWith('.github/CODEOWNERS')
-      })
+      const ig = ignore()
+      const spyAdd = jest.spyOn(ig, 'add')
+      generateIgnore(ig, 'CODEOWNER')
+      expect(mockedRead.mock.calls.length).toBe(1)
+      expect(mockedRead.mock.calls[0][0]).toBe('CODEOWNER')
+      expect(spyAdd).toHaveBeenCalledTimes(2)
+      expect(spyAdd).toHaveBeenNthCalledWith(1, '*.js')
+      expect(spyAdd).toHaveBeenNthCalledWith(2, 'src/*.js')
+      expect(mockedExist).toHaveBeenCalledTimes(1)
+      expect(mockedExist).toHaveBeenCalledWith('CODEOWNER')
     })
-    it('Should throw error when provided codeowner file does not exist', () => {
+
+    it('Should throw an error when the provided codeowner file does not exist', () => {
+      mockedRead.mockReturnValue(`
+        # This is a comment
+        *.js     @someone
+        # another comment 
+        src/*.js
+    `)
       mockedExist.mockReturnValue(false)
-      return generateGlobber(undefined).catch((error: Error) => {
-        expect(mockedExist).toHaveBeenCalledTimes(1)
-        expect(mockedExist).toHaveBeenCalledWith('.github/CODEOWNERS')
-        expect(error.message).toEqual(
-          'CODEOWNERS file .github/CODEOWNERS not exist.'
-        )
-      })
+      const ig = ignore()
+
+      expect(() => generateIgnore(ig, 'CODEOWNER')).toThrowError(
+        'CODEOWNERS file CODEOWNER not exist.'
+      )
     })
   })
 
   describe('checkFiles', () => {
     it('Should pass when all the files are covered', () => {
-      return glob.create('').then((globber) => {
-        const mockedGlob = jest.spyOn(globber, 'glob')
-        mockedGlob.mockResolvedValue(['file1', './file2'])
-        return checkFiles(globber, ['file1', './file2']).then((result) => {
-          expect(result).toBe(true)
-        })
+      const ig = ignore().add('file1').add('file2')
+      return checkFiles(ig, ['file1', 'file2']).then((result) => {
+        expect(result).toBe(true)
       })
     })
 
     it('Should fail when not all the files are covered', () => {
-      return glob.create('').then((globber) => {
-        const mockedGlob = jest.spyOn(globber, 'glob')
-        mockedGlob.mockResolvedValue(['file1', 'file23'])
-        return checkFiles(globber, ['file1', 'file2']).then((result) => {
-          expect(result).toBe(false)
-        })
+      const ig = ignore().add('file1')
+      return checkFiles(ig, ['file1', 'file2']).then((result) => {
+        expect(result).toBe(false)
       })
     })
   })

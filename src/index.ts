@@ -1,8 +1,9 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github/lib/github'
-import { generateGlobber, checkFiles, readRequiredContext } from './utils'
+import { checkFiles, readRequiredContext, generateIgnore } from './utils'
 import process from 'process'
 import { OctokitResponse, PullsListFilesResponseData } from '@octokit/types'
+import ignore from 'ignore'
 
 export async function main(): Promise<void> {
   const [token, prNumber] = readRequiredContext()
@@ -18,9 +19,10 @@ export async function main(): Promise<void> {
       repo,
     }
   )
-  const glober = await generateGlobber(codeOwnerPath)
+  const ig = ignore()
+  generateIgnore(ig, codeOwnerPath)
   const diffFiles = response.data.map((data) => data.filename)
-  const result = await checkFiles(glober, diffFiles)
+  const result = await checkFiles(ig, diffFiles)
   if (!result) {
     throw 'Test failed.'
   }

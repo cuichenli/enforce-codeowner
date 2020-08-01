@@ -1,44 +1,40 @@
 import fs from 'fs'
-import * as glob from '@actions/glob'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import path from 'path'
+import { Ignore } from 'ignore'
 
-export async function generateGlobber(
+export function generateIgnore(
+  ig: Ignore,
   codeOwnerPath: string | undefined
-): Promise<glob.Globber> {
+): void {
   const path = codeOwnerPath || '.github/CODEOWNERS'
   if (!fs.existsSync(path)) {
     throw new Error(`CODEOWNERS file ${path} not exist.`)
   }
 
-  const rawCodeOwners = fs.readFileSync(path)
+  const rawCodeOwners = fs.readFileSync(path).toString()
 
-  const globPatterns = rawCodeOwners
-    .toString()
-    .split(/\r?\n/)
-    .reduce((acc: string[], curr) => {
-      const trimmedLine = curr.trim()
-      if (trimmedLine === '' || trimmedLine.startsWith('#')) {
-        return acc
-      }
-      const globPattern = trimmedLine.split(/\s+/)[0]
-      acc.push(globPattern)
-      return acc
-    }, [])
-  return await glob.create(globPatterns.join('\n'))
+  rawCodeOwners.split(/\r?\n/).map((line) => {
+    const trimmedLine = line.trim()
+    if (trimmedLine === '' || trimmedLine.startsWith('#')) {
+      return
+    }
+    const pattern = trimmedLine.split(/\s+/)[0]
+    ig.add(pattern)
+  })
 }
 
 export async function checkFiles(
-  globber: glob.Globber,
+  ig: Ignore,
   diffFiles: string[]
 ): Promise<boolean> {
-  const files = await globber.glob()
-  const resolvedPaths = files.map((file) => path.resolve(file))
   let passed = true
-  diffFiles.map((file) => {
-    const resolvedDiffFile = path.resolve(file)
-    if (resolvedPaths.indexOf(resolvedDiffFile) === -1) {
+  diffFiles.forEach((file) => {
+    // The ignore package is initially for gitignore, since the CODEOWNERS file
+    // share the same syntax with gitignore, we can use this package to check
+    // if the provided file is covered. Only in our case, we want the file to be
+    // ignored instead.
+    if (!ig.ignores(file)) {
       core.error(`${file} does not have a codeowner.`)
       passed = false
     }

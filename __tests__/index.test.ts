@@ -1,9 +1,9 @@
 import { mocked } from 'ts-jest/utils'
 import * as utils from '../src/utils'
 import * as github from '@actions/github'
-import * as glob from '@actions/glob'
 import nock from 'nock'
 import * as index from '../src/index'
+import { Ignore } from 'ignore'
 
 jest.mock('../src/utils', () => {
   const originModule = jest.requireActual('../src/utils')
@@ -11,12 +11,12 @@ jest.mock('../src/utils', () => {
     __esModule: true,
     checkFiles: originModule.checkFiles,
     readRequiredContext: jest.fn(),
-    generateGlobber: jest.fn(),
+    generateIgnore: jest.fn(),
   }
 })
 describe('main', () => {
   let mockedReadContext: jest.MockedFunction<typeof utils.readRequiredContext>
-  let mockedGenerateGlobber: jest.MockedFunction<typeof utils.generateGlobber>
+  let mockedGenerateIgnore: jest.MockedFunction<typeof utils.generateIgnore>
   let spyCheckFile: jest.SpiedFunction<typeof utils.checkFiles>
   beforeEach(() => {
     jest.spyOn(github.context, 'repo', 'get').mockImplementation(() => {
@@ -27,15 +27,15 @@ describe('main', () => {
     })
     mockedReadContext = mocked(utils.readRequiredContext, true)
     mockedReadContext.mockReturnValue(['token', 40])
-    mockedGenerateGlobber = mocked(utils.generateGlobber)
-    mockedGenerateGlobber.mockImplementationOnce(async () => {
-      return glob.create('*')
+    mockedGenerateIgnore = mocked(utils.generateIgnore)
+    mockedGenerateIgnore.mockImplementationOnce((ig: Ignore) => {
+      ig.add('*.ts').add('*.json')
     })
     spyCheckFile = jest.spyOn(utils, 'checkFiles')
   })
   afterEach(() => {
     mockedReadContext.mockClear()
-    mockedGenerateGlobber.mockClear()
+    mockedGenerateIgnore.mockClear()
     spyCheckFile.mockClear()
   })
   it('Should pass when all the files are covered', () => {
