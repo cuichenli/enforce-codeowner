@@ -2,19 +2,20 @@ name: test
 on: pull_request
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: yarn
-      - run: yarn jest
-        env:
-          INTEGRATION_TEST: true
-          INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
-          GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}'
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - run: yarn
+  #     - run: yarn jest
+  #       env:
+  #         INTEGRATION_TEST: true
+  #         INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
+  #         GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}'
   check_code_owner:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - uses: cuichenli/enforce-codeowner@ea77db9
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
