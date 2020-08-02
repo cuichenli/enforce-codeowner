@@ -28,5 +28,7 @@ jobs:
           add: '.'
           message: '${{env.MSG}}'
           cwd: './release'
+          ref: 'release'
+          signoff: true
         env:
           GITHUB_TOKEN: '{ { secrets.GITHUB_TOKEN } }'
