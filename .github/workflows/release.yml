@@ -26,7 +26,7 @@ jobs:
       - uses: EndBug/add-and-commit@v4
         with:
           add: '.'
-          message: $MSG
+          message: '${{env.MSG}}'
           cwd: './release'
         env:
-          GITHUB_TOKEN: "{ { secrets.GITHUB_TOKEN } }"
+          GITHUB_TOKEN: '{ { secrets.GITHUB_TOKEN } }'
