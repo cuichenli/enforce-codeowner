@@ -34,6 +34,7 @@ export async function checkFiles(
     // share the same syntax with gitignore, we can use this package to check
     // if the provided file is covered. Only in our case, we want the file to be
     // ignored instead.
+    core.info(`Checking file ${file}`)
     if (!ig.ignores(file)) {
       core.error(`${file} does not have a codeowner.`)
       passed = false
