@@ -1,0 +1,32 @@
+name: release
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: release
+          ref: release
+      - uses: actions/checkout@v2
+        with:
+          path: master
+          ref: master
+      - run: >
+          cd master && msg=$(git log -1 --pretty=%B) && echo "::set-env name=MSG::$msg"
+
+      - run: >
+          cd master && yarn && yarn webpack
+      - run: >
+          cp master/dist/bundle.js release/index.js && cp master/action.yml release/action.yml
+      - uses: EndBug/add-and-commit@v4
+        with:
+          add: '.'
+          message: $MSG
+          cwd: './release'
+        env:
+          GITHUB_TOKEN: { { secrets.GITHUB_TOKEN } }
