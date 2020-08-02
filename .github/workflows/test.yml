@@ -16,3 +16,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: cuichenli/enforce-codeowner@ea77db9
+        env:
+          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
