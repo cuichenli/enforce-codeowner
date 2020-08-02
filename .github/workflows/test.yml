@@ -15,4 +15,4 @@ jobs:
   check_code_owner:
     runs-on: ubuntu-latest
     steps:
-      - uses: cuichenli/enforce-codeowner@v0.1
+      - uses: cuichenli/enforce-codeowner@ea77db9
