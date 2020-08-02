@@ -12,6 +12,7 @@
     "@types/jest": "^26.0.7",
     "@typescript-eslint/eslint-plugin": "^3.7.1",
     "@typescript-eslint/parser": "^3.7.1",
+    "cz-conventional-changelog": "3.2.0",
     "eslint": "^7.5.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -28,5 +29,10 @@
     "@actions/core": "^1.2.4",
     "@actions/github": "^4.0.0",
     "ignore": "^5.1.8"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
