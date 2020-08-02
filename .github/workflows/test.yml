@@ -10,5 +10,4 @@ jobs:
       - run: yarn jest
         env:
           INTEGRATION_TEST: true
-        with:
-          CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
+          INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
