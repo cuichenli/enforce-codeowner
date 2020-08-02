@@ -11,10 +11,10 @@ jobs:
         env:
           INTEGRATION_TEST: true
           INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
-          GITHUB_TOKEN: '{{secrets.GITHUB_TOKEN}}'
+          GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}'
   check_code_owner:
     runs-on: ubuntu-latest
     steps:
       - uses: cuichenli/enforce-codeowner@ea77db9
         env:
-          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
