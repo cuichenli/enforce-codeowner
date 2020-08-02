@@ -1,0 +1,9 @@
+name: enforce-codeowner
+description: 'Enforce codeowner on PR'
+inputs:
+  CODEOWNERS_PATH:
+    description: 'Location of the codeowner file.'
+    default: '.github/CODEOWNERS'
+runs:
+  using: 'node12'
+  main: 'index.js'
