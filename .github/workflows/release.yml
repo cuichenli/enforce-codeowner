@@ -1,0 +1,17 @@
+name: release
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, '[release]')"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: release
+      - run: yarn && yarn semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
