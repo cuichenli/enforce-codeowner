@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "conventional-changelog-conventionalcommits": "^4.3.0",
+    "cz-conventional-changelog": "3.2.0",
+    "semantic-release": "^17.1.1"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
