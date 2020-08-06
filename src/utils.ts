@@ -2,6 +2,7 @@ import fs from 'fs'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { Ignore } from 'ignore'
+import { GitHub } from '@actions/github/lib/utils'
 
 export function generateIgnore(
   ig: Ignore,
@@ -51,4 +52,30 @@ export function readRequiredContext(): [string, number] {
 
   const prNumber = github.context.payload.number
   return [token, Number(prNumber)]
+}
+
+export async function postComment(
+  fileList: string[],
+  owner: string,
+  repo: string,
+  prNumber: number,
+  octokit: InstanceType<typeof GitHub>
+): Promise<void> {
+  if (fileList.length === 0) {
+    return
+  }
+  const message: string[] = []
+  const issue_number = prNumber
+  message.push('The following files do not have CODEOWNER')
+  message.push(...fileList.map((file) => `- ${file}`))
+  const body = message.join('\n')
+  await octokit.request(
+    'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+    {
+      owner,
+      repo,
+      issue_number,
+      body,
+    }
+  )
 }
