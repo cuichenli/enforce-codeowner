@@ -94,14 +94,14 @@ describe('index', () => {
     it('Should pass when all the files are covered', () => {
       const ig = ignore().add('file1').add('file2')
       return checkFiles(ig, ['file1', 'file2']).then((result) => {
-        expect(result).toBe(true)
+        expect(result).toEqual([])
       })
     })
 
     it('Should fail when not all the files are covered', () => {
       const ig = ignore().add('file1')
       return checkFiles(ig, ['file1', 'file2']).then((result) => {
-        expect(result).toBe(false)
+        expect(result).toEqual(['file2'])
       })
     })
   })

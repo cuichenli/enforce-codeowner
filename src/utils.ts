@@ -27,8 +27,8 @@ export function generateIgnore(
 export async function checkFiles(
   ig: Ignore,
   diffFiles: string[]
-): Promise<boolean> {
-  let passed = true
+): Promise<string[]> {
+  const failedList: string[] = []
   diffFiles.forEach((file) => {
     // The ignore package is initially for gitignore, since the CODEOWNERS file
     // share the same syntax with gitignore, we can use this package to check
@@ -37,10 +37,10 @@ export async function checkFiles(
     core.info(`Checking file ${file}`)
     if (!ig.ignores(file)) {
       core.error(`${file} does not have a codeowner.`)
-      passed = false
+      failedList.push(file)
     }
   })
-  return passed
+  return failedList
 }
 
 export function readRequiredContext(): [string, number] {
