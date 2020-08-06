@@ -1,8 +1,14 @@
 import fs from 'fs'
 import { mocked } from 'ts-jest/utils'
-import { checkFiles, readRequiredContext, generateIgnore } from '../src/utils'
+import {
+  checkFiles,
+  readRequiredContext,
+  generateIgnore,
+  postComment,
+} from '../src/utils'
 import * as github from '@actions/github'
 import ignore from 'ignore'
+import nock from 'nock'
 
 jest.mock('fs')
 describe('index', () => {
@@ -133,6 +139,32 @@ describe('index', () => {
     it('Should throw error when GITHUB_TOKEN is not provided', () => {
       process.env = {}
       expect(readRequiredContext).toThrow('Failed to read GITHUB_TOKEN')
+    })
+  })
+
+  describe('postComment', () => {
+    it('It should post a comment to the corresponding PR', () => {
+      const scope = nock('https://api.github.com')
+        .post('/repos/some-owner/some-repo/issues/40/comments', {
+          body: 'The following files do not have CODEOWNER\n- file1\n- file2',
+        })
+        .reply(200)
+      const octokit = github.getOctokit('token')
+      return postComment(
+        ['file1', 'file2'],
+        'some-owner',
+        'some-repo',
+        40,
+        octokit
+      ).then(() => scope.done())
+    })
+
+    it('Should not post any comment to the PR if no file is provided', () => {
+      const octokit = github.getOctokit('token')
+      const mockedReqeust = spyOn(octokit, 'request')
+      return postComment([], '', '', 1, octokit).then(() =>
+        expect(mockedReqeust).toHaveBeenCalledTimes(0)
+      )
     })
   })
 })
