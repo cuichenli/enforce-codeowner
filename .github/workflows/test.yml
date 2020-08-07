@@ -11,4 +11,5 @@ jobs:
         env:
           INTEGRATION_TEST: true
           INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
-          GITHUB_TOKEN: "{{secrets.GITHUB_TOKEN}}"
+          GITHUB_TOKEN: '{{secrets.GITHUB_TOKEN}}'
+          INPUT_POST_COMMENT: true

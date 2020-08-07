@@ -6,6 +6,7 @@ import {
   generateIgnore,
   postComment,
 } from '../src/utils'
+import * as core from '@actions/core'
 import * as github from '@actions/github'
 import ignore from 'ignore'
 import nock from 'nock'
@@ -143,6 +144,14 @@ describe('index', () => {
   })
 
   describe('postComment', () => {
+    let spyGetInput: jest.SpiedFunction<typeof core.getInput>
+    beforeEach(() => {
+      spyGetInput = jest.spyOn(core, 'getInput')
+    })
+
+    afterEach(() => {
+      spyGetInput.mockClear()
+    })
     it('It should post a comment to the corresponding PR', () => {
       const scope = nock('https://api.github.com')
         .post('/repos/some-owner/some-repo/issues/40/comments', {
@@ -150,13 +159,35 @@ describe('index', () => {
         })
         .reply(200)
       const octokit = github.getOctokit('token')
+      spyGetInput.mockReturnValue('true')
       return postComment(
         ['file1', 'file2'],
         'some-owner',
         'some-repo',
         40,
         octokit
-      ).then(() => scope.done())
+      ).then(() => {
+        scope.done()
+        expect(spyGetInput).toHaveBeenCalledTimes(1)
+        expect(spyGetInput).toHaveBeenCalledWith('POST_COMMENT')
+      })
+    })
+
+    it('It should not post a comment to the corresponding PR when input POST_COMMENT is false', () => {
+      const octokit = github.getOctokit('token')
+      const spyRequest = jest.spyOn(octokit, 'request')
+      spyGetInput.mockReturnValue('false')
+      return postComment(
+        ['file1', 'file2'],
+        'some-owner',
+        'some-repo',
+        40,
+        octokit
+      ).then(() => {
+        expect(spyRequest).toHaveReturnedTimes(0)
+        expect(spyGetInput).toHaveBeenCalledTimes(1)
+        expect(spyGetInput).toHaveBeenCalledWith('POST_COMMENT')
+      })
     })
 
     it('Should not post any comment to the PR if no file is provided', () => {
