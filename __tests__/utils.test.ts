@@ -1,8 +1,15 @@
 import fs from 'fs'
 import { mocked } from 'ts-jest/utils'
-import { checkFiles, readRequiredContext, generateIgnore } from '../src/utils'
+import {
+  checkFiles,
+  readRequiredContext,
+  generateIgnore,
+  postComment,
+} from '../src/utils'
+import * as core from '@actions/core'
 import * as github from '@actions/github'
 import ignore from 'ignore'
+import nock from 'nock'
 
 jest.mock('fs')
 describe('index', () => {
@@ -94,14 +101,14 @@ describe('index', () => {
     it('Should pass when all the files are covered', () => {
       const ig = ignore().add('file1').add('file2')
       return checkFiles(ig, ['file1', 'file2']).then((result) => {
-        expect(result).toBe(true)
+        expect(result).toEqual([])
       })
     })
 
     it('Should fail when not all the files are covered', () => {
       const ig = ignore().add('file1')
       return checkFiles(ig, ['file1', 'file2']).then((result) => {
-        expect(result).toBe(false)
+        expect(result).toEqual(['file2'])
       })
     })
   })
@@ -133,6 +140,62 @@ describe('index', () => {
     it('Should throw error when GITHUB_TOKEN is not provided', () => {
       process.env = {}
       expect(readRequiredContext).toThrow('Failed to read GITHUB_TOKEN')
+    })
+  })
+
+  describe('postComment', () => {
+    let spyGetInput: jest.SpiedFunction<typeof core.getInput>
+    beforeEach(() => {
+      spyGetInput = jest.spyOn(core, 'getInput')
+    })
+
+    afterEach(() => {
+      spyGetInput.mockClear()
+    })
+    it('It should post a comment to the corresponding PR', () => {
+      const scope = nock('https://api.github.com')
+        .post('/repos/some-owner/some-repo/issues/40/comments', {
+          body: 'The following files do not have CODEOWNER\n- file1\n- file2',
+        })
+        .reply(200)
+      const octokit = github.getOctokit('token')
+      spyGetInput.mockReturnValue('true')
+      return postComment(
+        ['file1', 'file2'],
+        'some-owner',
+        'some-repo',
+        40,
+        octokit
+      ).then(() => {
+        scope.done()
+        expect(spyGetInput).toHaveBeenCalledTimes(1)
+        expect(spyGetInput).toHaveBeenCalledWith('POST_COMMENT')
+      })
+    })
+
+    it('It should not post a comment to the corresponding PR when input POST_COMMENT is false', () => {
+      const octokit = github.getOctokit('token')
+      const spyRequest = jest.spyOn(octokit, 'request')
+      spyGetInput.mockReturnValue('false')
+      return postComment(
+        ['file1', 'file2'],
+        'some-owner',
+        'some-repo',
+        40,
+        octokit
+      ).then(() => {
+        expect(spyRequest).toHaveReturnedTimes(0)
+        expect(spyGetInput).toHaveBeenCalledTimes(1)
+        expect(spyGetInput).toHaveBeenCalledWith('POST_COMMENT')
+      })
+    })
+
+    it('Should not post any comment to the PR if no file is provided', () => {
+      const octokit = github.getOctokit('token')
+      const mockedReqeust = spyOn(octokit, 'request')
+      return postComment([], '', '', 1, octokit).then(() =>
+        expect(mockedReqeust).toHaveBeenCalledTimes(0)
+      )
     })
   })
 })

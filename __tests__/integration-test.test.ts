@@ -77,6 +77,14 @@ describe('integration-test', () => {
           patch: '',
         },
       ])
+      .post(
+        `/repos/${process.env.GITHUB_REPOSITORY}/issues/${github.context.payload.number}/comments`,
+        {
+          body:
+            'The following files do not have CODEOWNER\n- __tests__/integration-test.test.js',
+        }
+      )
+      .reply(200)
     expect.assertions(1)
     try {
       await main()

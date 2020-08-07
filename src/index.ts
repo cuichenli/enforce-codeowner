@@ -1,6 +1,11 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github/lib/github'
-import { checkFiles, readRequiredContext, generateIgnore } from './utils'
+import {
+  checkFiles,
+  readRequiredContext,
+  generateIgnore,
+  postComment,
+} from './utils'
 import process from 'process'
 import { OctokitResponse, PullsListFilesResponseData } from '@octokit/types'
 import ignore from 'ignore'
@@ -23,7 +28,8 @@ export async function main(): Promise<void> {
   generateIgnore(ig, codeOwnerPath)
   const diffFiles = response.data.map((data) => data.filename)
   const result = await checkFiles(ig, diffFiles)
-  if (!result) {
+  if (result.length !== 0) {
+    await postComment(result, owner, repo, prNumber, octokit)
     throw new Error('Test failed.')
   }
 }

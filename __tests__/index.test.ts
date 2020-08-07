@@ -12,11 +12,13 @@ jest.mock('../src/utils', () => {
     checkFiles: originModule.checkFiles,
     readRequiredContext: jest.fn(),
     generateIgnore: jest.fn(),
+    postComment: jest.fn(),
   }
 })
 describe('main', () => {
   let mockedReadContext: jest.MockedFunction<typeof utils.readRequiredContext>
   let mockedGenerateIgnore: jest.MockedFunction<typeof utils.generateIgnore>
+  let mockedPostComment: jest.MockedFunction<typeof utils.postComment>
   let spyCheckFile: jest.SpiedFunction<typeof utils.checkFiles>
   beforeEach(() => {
     jest.spyOn(github.context, 'repo', 'get').mockImplementation(() => {
@@ -27,6 +29,7 @@ describe('main', () => {
     })
     mockedReadContext = mocked(utils.readRequiredContext, true)
     mockedReadContext.mockReturnValue(['token', 40])
+    mockedPostComment = mocked(utils.postComment, true)
     mockedGenerateIgnore = mocked(utils.generateIgnore)
     mockedGenerateIgnore.mockImplementationOnce((ig: Ignore) => {
       ig.add('*.ts').add('*.json')
@@ -37,6 +40,7 @@ describe('main', () => {
     mockedReadContext.mockClear()
     mockedGenerateIgnore.mockClear()
     spyCheckFile.mockClear()
+    mockedPostComment.mockClear()
   })
   it('Should pass when all the files are covered', () => {
     const scope = nock('https://api.github.com')
@@ -75,6 +79,7 @@ describe('main', () => {
         'package.json',
         'src/index.ts',
       ])
+      expect(mockedPostComment).toHaveBeenCalledTimes(0)
     })
   })
   it('Should not pass when not all the files are covered', () => {
@@ -114,6 +119,11 @@ describe('main', () => {
         'package.json',
         'src/not-exist.js',
       ])
+      expect(mockedPostComment).toHaveBeenCalledTimes(1)
+      expect(mockedPostComment.mock.calls[0][0]).toEqual(['src/not-exist.js'])
+      expect(mockedPostComment.mock.calls[0][1]).toEqual('some-owner')
+      expect(mockedPostComment.mock.calls[0][2]).toEqual('some-repo')
+      expect(mockedPostComment.mock.calls[0][3]).toEqual(40)
       expect(e.message).toBe('Test failed.')
     })
   })

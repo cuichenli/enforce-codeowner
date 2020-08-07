@@ -4,6 +4,9 @@ inputs:
   CODEOWNERS_PATH:
     description: 'Location of the codeowner file.'
     default: '.github/CODEOWNERS'
+  POST_COMMENT:
+    description: 'Post a comment to the PR if the files changed do not have a code owner'
+    default: true
 runs:
   using: 'node12'
   main: 'index.js'
