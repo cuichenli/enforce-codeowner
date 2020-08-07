@@ -69,13 +69,15 @@ export async function postComment(
   message.push('The following files do not have CODEOWNER')
   message.push(...fileList.map((file) => `- ${file}`))
   const body = message.join('\n')
-  await octokit.request(
-    'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
-    {
-      owner,
-      repo,
-      issue_number,
-      body,
-    }
-  )
+  if (core.getInput('POST_COMMENT').toLowerCase() === 'true') {
+    await octokit.request(
+      'POST /repos/{owner}/{repo}/issues/{issue_number}/comments',
+      {
+        owner,
+        repo,
+        issue_number,
+        body,
+      }
+    )
+  }
 }
