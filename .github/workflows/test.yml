@@ -16,9 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: cuichenli/enforce-codeowner@61d0b43
+      - uses: cuichenli/enforce-codeowner@aa4cae5
+        with:
+          POST_COMMENT: true
         env:
-          INTEGRATION_TEST: true
-          INPUT_CODEOWNERS_PATH: ./__tests__/data/CODEOWNERS
           GITHUB_TOKEN: '{{secrets.GITHUB_TOKEN}}'
-          INPUT_POST_COMMENT: true
